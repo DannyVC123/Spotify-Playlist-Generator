@@ -1,0 +1,186 @@
+{
+  "artists": {
+    "href": "https://api.spotify.com/v1/search?offset=0&limit=5&query=lilypichu&type=artist&locale=en-US,en;q%3D0.9",
+    "limit": 5,
+    "next": "https://api.spotify.com/v1/search?offset=5&limit=5&query=lilypichu&type=artist&locale=en-US,en;q%3D0.9",
+    "offset": 0,
+    "previous": null,
+    "total": 803,
+    "items": [
+      {
+        "external_urls": {
+          "spotify": "https://open.spotify.com/artist/6maAVJxVTGW1xA3LokpQm8"
+        },
+        "followers": {
+          "href": null,
+          "total": 294848
+        },
+        "genres": [
+          "otacore"
+        ],
+        "href": "https://api.spotify.com/v1/artists/6maAVJxVTGW1xA3LokpQm8",
+        "id": "6maAVJxVTGW1xA3LokpQm8",
+        "images": [
+          {
+            "url": "https://i.scdn.co/image/ab6761610000e5eb3ffc7da28ea26473141f4d56",
+            "height": 640,
+            "width": 640
+          },
+          {
+            "url": "https://i.scdn.co/image/ab676161000051743ffc7da28ea26473141f4d56",
+            "height": 320,
+            "width": 320
+          },
+          {
+            "url": "https://i.scdn.co/image/ab6761610000f1783ffc7da28ea26473141f4d56",
+            "height": 160,
+            "width": 160
+          }
+        ],
+        "name": "LilyPichu",
+        "popularity": 49,
+        "type": "artist",
+        "uri": "spotify:artist:6maAVJxVTGW1xA3LokpQm8"
+      },
+      {
+        "external_urls": {
+          "spotify": "https://open.spotify.com/artist/7yntSJ6uojO3z6GFUVwhAW"
+        },
+        "followers": {
+          "href": null,
+          "total": 2395533
+        },
+        "genres": [
+          "pov: indie"
+        ],
+        "href": "https://api.spotify.com/v1/artists/7yntSJ6uojO3z6GFUVwhAW",
+        "id": "7yntSJ6uojO3z6GFUVwhAW",
+        "images": [
+          {
+            "url": "https://i.scdn.co/image/ab6761610000e5ebed2fd5aa8e1c20922c190d30",
+            "height": 640,
+            "width": 640
+          },
+          {
+            "url": "https://i.scdn.co/image/ab67616100005174ed2fd5aa8e1c20922c190d30",
+            "height": 320,
+            "width": 320
+          },
+          {
+            "url": "https://i.scdn.co/image/ab6761610000f178ed2fd5aa8e1c20922c190d30",
+            "height": 160,
+            "width": 160
+          }
+        ],
+        "name": "CORPSE",
+        "popularity": 65,
+        "type": "artist",
+        "uri": "spotify:artist:7yntSJ6uojO3z6GFUVwhAW"
+      },
+      {
+        "external_urls": {
+          "spotify": "https://open.spotify.com/artist/0lhcAgqzhRZuhHTXJsilSc"
+        },
+        "followers": {
+          "href": null,
+          "total": 245521
+        },
+        "genres": [],
+        "href": "https://api.spotify.com/v1/artists/0lhcAgqzhRZuhHTXJsilSc",
+        "id": "0lhcAgqzhRZuhHTXJsilSc",
+        "images": [
+          {
+            "url": "https://i.scdn.co/image/ab6761610000e5eb540943edf401930ba31a2e16",
+            "height": 640,
+            "width": 640
+          },
+          {
+            "url": "https://i.scdn.co/image/ab67616100005174540943edf401930ba31a2e16",
+            "height": 320,
+            "width": 320
+          },
+          {
+            "url": "https://i.scdn.co/image/ab6761610000f178540943edf401930ba31a2e16",
+            "height": 160,
+            "width": 160
+          }
+        ],
+        "name": "Chevy",
+        "popularity": 60,
+        "type": "artist",
+        "uri": "spotify:artist:0lhcAgqzhRZuhHTXJsilSc"
+      },
+      {
+        "external_urls": {
+          "spotify": "https://open.spotify.com/artist/4ExEi8SBEd3QRgwbGw2nHC"
+        },
+        "followers": {
+          "href": null,
+          "total": 80421
+        },
+        "genres": [
+          "alt z"
+        ],
+        "href": "https://api.spotify.com/v1/artists/4ExEi8SBEd3QRgwbGw2nHC",
+        "id": "4ExEi8SBEd3QRgwbGw2nHC",
+        "images": [
+          {
+            "url": "https://i.scdn.co/image/ab6761610000e5eb81d94e149e077f1020affac6",
+            "height": 640,
+            "width": 640
+          },
+          {
+            "url": "https://i.scdn.co/image/ab6761610000517481d94e149e077f1020affac6",
+            "height": 320,
+            "width": 320
+          },
+          {
+            "url": "https://i.scdn.co/image/ab6761610000f17881d94e149e077f1020affac6",
+            "height": 160,
+            "width": 160
+          }
+        ],
+        "name": "Lilyisthatyou",
+        "popularity": 56,
+        "type": "artist",
+        "uri": "spotify:artist:4ExEi8SBEd3QRgwbGw2nHC"
+      },
+      {
+        "external_urls": {
+          "spotify": "https://open.spotify.com/artist/6fC2AcsQtd9h4BWELbbire"
+        },
+        "followers": {
+          "href": null,
+          "total": 833518
+        },
+        "genres": [
+          "pov: indie",
+          "vancouver indie"
+        ],
+        "href": "https://api.spotify.com/v1/artists/6fC2AcsQtd9h4BWELbbire",
+        "id": "6fC2AcsQtd9h4BWELbbire",
+        "images": [
+          {
+            "url": "https://i.scdn.co/image/ab6761610000e5eb0206d13230ade13d3e4255ba",
+            "height": 640,
+            "width": 640
+          },
+          {
+            "url": "https://i.scdn.co/image/ab676161000051740206d13230ade13d3e4255ba",
+            "height": 320,
+            "width": 320
+          },
+          {
+            "url": "https://i.scdn.co/image/ab6761610000f1780206d13230ade13d3e4255ba",
+            "height": 160,
+            "width": 160
+          }
+        ],
+        "name": "Peach Pit",
+        "popularity": 65,
+        "type": "artist",
+        "uri": "spotify:artist:6fC2AcsQtd9h4BWELbbire"
+      }
+    ]
+  }
+}
