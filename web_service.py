@@ -11,16 +11,10 @@ import time
 
 class WebService:
     @staticmethod
-    def call(url, action, headers=None, params = None, data=None):
-        '''
-        if headers:
-            headers = json.dumps(headers)
-        if data:
-            data = json.dumps(data)
-        '''
-
+    def call(url, action, status_codes=None, headers=None, params=None, data=None):
         # https://developer.spotify.com/documentation/web-api/concepts/api-calls
-        status_codes = [200, 201, 202, 204, 304, 400, 401, 403, 404, 429, 500, 502, 503]
+        if not status_codes:
+            status_codes = [200, 201, 202, 204, 304, 400, 401, 403, 404, 429, 500, 502, 503]
 
         try:
             retries = 0

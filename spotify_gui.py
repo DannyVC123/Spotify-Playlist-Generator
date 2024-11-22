@@ -10,7 +10,9 @@ import sys
 import os
 import base64
 import time
+
 import tkinter as tk
+from PIL import Image, ImageTk
 
 from web_service import WebService
 from client import Client
@@ -42,9 +44,11 @@ class SpotifyGUI:
         title_label = tk.Label(self.root, text='Spotify Playlist Generator', font=('Arial', 16, 'bold'))
         title_label.pack(pady=10)
 
+        '''
         # Spacer
         spacer = tk.Label(self.root)
         spacer.pack(pady=5)
+        '''
 
         # Frame for login section
         login_frame = tk.Frame(self.root)
@@ -67,9 +71,11 @@ class SpotifyGUI:
         submit_url_button = tk.Button(self.root, text='Submit URL', width=15, command=self.initialize_spotify_client)
         submit_url_button.pack(pady=5)
 
+        '''
         # Spacer
         spacer2 = tk.Label(self.root)
         spacer2.pack(pady=5)
+        '''
 
         # Playlist Prompt
         playlist_prompt_label = tk.Label(self.root, text='Paste Playlist JSON from ChatGPT:', font=('Arial', 16, 'bold'))
@@ -112,11 +118,32 @@ class SpotifyGUI:
     def generate_playlist(self):
         params_json = self.playlist_prompt_textbox.get('1.0', 'end-1c')
         recommended_tracks = self.spotify_client.get_track_recommendations(params_json)
+        
         if recommended_tracks:
+            self.display_tracks(recommended_tracks)
+        '''
             playlist_name = self.playlist_name_textbox.get()
             playlist = self.spotify_client.create_playlist(playlist_name)
             playlist_url = self.spotify_client.populate_playlist(playlist, recommended_tracks)
             webbrowser.open(playlist_url)
+        '''
+    
+    def display_tracks(self, recommended_tracks):
+        songs_frame = tk.Frame(self.root, height=20)
+        songs_frame.pack(pady=10)
+        
+        for i, track in enumerate(recommended_tracks[0:5]):
+            img_name = track.download_album_cover()
 
+            img = Image.open(img_name)
+            img = img.resize((120, 120))
+            tk_img = ImageTk.PhotoImage(img)
+
+            img_label = tk.Label(songs_frame, image=tk_img)
+            img_label.image = tk_img
+            img_label.grid(row=0, column=i, padx=5)
+
+            name_label = tk.Label(songs_frame, text=track.name, wraplength=120)
+            name_label.grid(row=1, column=i, padx=5)
 
 SpotifyGUI()

@@ -305,11 +305,20 @@ class SpotifyClient:
         for track in response_body['tracks']:
             id      = track['id']
             name    = track['name']
+
             artists = []
             for artist in track['artists']:
                 artists.append(artist['name'])
             
-            track = Track(id, name, artists)
+            album_cover_url = None
+            max_size = 0
+            for image in track['album']['images']:
+                size = image['height']
+                if size > max_size:
+                    album_cover_url = image['url']
+                    max_size = size
+            
+            track = Track(id, name, artists, album_cover_url)
             recommended_tracks.append(track)
 
         for track in recommended_tracks:
