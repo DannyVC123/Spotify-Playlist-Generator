@@ -1,3 +1,5 @@
+import openai
+
 import json
 import requests
 import webbrowser
@@ -13,31 +15,115 @@ import time
 from web_service import WebService
 from spotify_client import SpotifyClient
 
-system_prompt = '''Interpret casual descriptions of music preferences and convert them into Spotify playlist JSON. Map descriptions to Spotify API parameters.
+class ChatGPTClient:
+    system_prompt = '''Interpret casual descriptions of music preferences and convert them into Spotify playlist JSON. Map descriptions to Spotify API parameters. The user will provide a general description of what they want in a playlist, without directly referencing Spotify API parameters.
+
+IMPORTANT: Include ALL parameters that can be reasonably inferred from the user's description. Don't limit yourself to just the required parameters.
 
 Required parameters:
-limit: Max tracks (default 10).
+- limit: Max tracks (default 10)
+- seed_artists (list of strings): Mentioned artists
+- seed_genres (list of strings): Mentioned genres
+- target_danceability (0 to 1): Danceability (e.g., "upbeat" = 0.8, "chill" = 0.2)
+- target_energy (0 to 1): Energy (e.g., "high energy" = 0.8, "relaxed" = 0.2)
+- target_instrumentalness (0 to 1): Instrumentalness (e.g., "instrumental" = 0.8, "vocal" = 0.2)
+- target_loudness (-60 to 0 dB): Loudness in decibels (e.g., "loud" = -5, "soft" = -40)
+- target_popularity (0 to 100): Popularity (e.g., "popular" = 80, "indie" = 30)
+- target_tempo (BPM): Tempo (e.g., "fast" = 140, "moderate" = 100, "slow" = 70)
+- target_valence (0 to 1): Mood (e.g., "happy" = 0.8, "sad" = 0.2)
 
-Optional parameters:
-seed_artists (list of strings): Mentioned artists
-seed_genres (list of strings): Mentioned genres (e.g., "pop", "rock", "disney")
-target_danceability (0 to 1): Danceability (e.g., "upbeat" = 1, "chill" = 0)
-target_energy (0 to 1): Energy (e.g., "high energy" = 1, "relaxed" = 0)
-target_instrumentalness (0 to 1): Instrumentalness (e.g., "instrumental" = 1, "vocal" = 0)
-target_loudness (0-1): Loudness (e.g., "loud" = 1, "soft" = 0)
-target_popularity (0 to 100): Popularity score (e.g., "popular" = 100, "less known" = 0)
-target_tempo (BPM): Tempo (e.g., "fast" = high, "slow" = low)
-target_valence (0 to 1): Mood (e.g., "happy" = high, "sad" = low)
+Valid genres: [{genres}]
 
-Genre list:
-{}
+Parameter Mapping Rules:
+1. Genre Mapping:
+   - Direct mentions: "pop" → ["pop"], "rock" → ["rock"]
+   - Implied genres: "electronic beats" → ["electronic", "dance"]
+   - Multiple genres: "pop rock" → ["pop", "rock"]
 
-Please output the JSON and nothing else.'''
+2. Artist Mapping:
+   - Direct mention of artists: "Taylor Swift" → ["Taylor Swift"]
+   - Implied artists: "songs with a similar vibe to Ed Sheeran" → ["Ed Sheeran"]`
+   - No artists mentioned: []
 
-class ChatGPTClient:
-    def __init__(self, system_prompt):
-        self.system_prompt = system_prompt
+3. Mood/Energy Mapping:
+   - "upbeat"/"energetic" → target_energy: 0.8, target_danceability: 0.8
+   - "chill"/"relaxed" → target_energy: 0.2, target_danceability: 0.2
+   - "happy" → target_valence: 0.8
+   - "sad" → target_valence: 0.2
+
+4. Tempo Mapping:
+   - "fast"/"uptempo" → target_tempo: 140
+   - "moderate" → target_tempo: 100
+   - "slow" → target_tempo: 70
+
+5. Style Mapping:
+   - "instrumental" → target_instrumentalness: 0.8
+   - "vocal" → target_instrumentalness: 0.2
+   - "loud" → target_loudness: 0.8
+   - "soft" → target_loudness: 0.2
+
+6. Popularity Mapping:
+   - "popular"/"mainstream" → target_popularity: 80
+   - "indie"/"underground" → target_popularity: 30
+
+Example 1:
+Input: "I want upbeat pop songs by Taylor Swift and Ed Sheeran"
+Output:
+{{
+    "limit": 10,
+    "seed_artists": ["Taylor Swift", "Ed Sheeran"],
+    "seed_genres": ["pop"],
+    "target_danceability": 0.8,
+    "target_energy": 0.8,
+    "target_instrumentalness": 0.2,
+    "target_loudness": 0.8,
+    "target_popularity": 80,
+    "target_tempo": 120,
+    "target_valence": 0.8
+}}
+
+Example 2:
+Input: "Give me some chill instrumental jazz for studying"
+Output:
+{{
+    "limit": 10,
+    "seed_artists": [],
+    "seed_genres": ["jazz"],
+    "target_danceability": 0.2,
+    "target_energy": 0.2,
+    "target_instrumentalness": 0.8,
+    "target_loudness": 0.2,
+    "target_popularity": 30,
+    "target_tempo": 70,
+    "target_valence": 0.2
+}}
+
+Based on the user's description, generate a JSON object that includes ALL applicable parameters. Include optional parameters whenever you can reasonably infer them from the description. Output only the JSON object with no additional text.'''
+
+    def __init__(self, api_key, model):
+        openai.api_key = api_key
+        self.model = model
     
-    def get_recommendations_json(genres, user_prompt):
-        sys_prompt_w_genres = system_prompt.format(', '.join(genres))
+    def get_recommendations_json(self, genres, user_prompt):
+        genre_strings = [f'"{genre}"' for genre in genres]
+        print(ChatGPTClient.system_prompt)
+        print(genre_strings)
+        sys_prompt_w_genres = ChatGPTClient.system_prompt.format(genres=', '.join(genre_strings))
+        print(sys_prompt_w_genres)
+
+        messages = [
+            {
+                'role': 'system',
+                'content': sys_prompt_w_genres
+            },
+            {
+                'role': 'user',
+                'content': user_prompt
+            }
+        ]
+
+        response = openai.chat.completions.create(model=self.model, messages=messages)
+        params_json = response.choices[0].message.content
+
+        return params_json[params_json.find("{") : params_json.rfind("}") + 1]
 
