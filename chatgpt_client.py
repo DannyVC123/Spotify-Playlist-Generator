@@ -118,7 +118,7 @@ Based on the user's description, generate a JSON object that includes ALL applic
             }
         ]
 
-        response = openai.chat.completions.create(model=self.model, temperature=0, max_tokens=3000, messages=messages)
+        response = openai.chat.completions.create(model=self.model, temperature=0.1, max_tokens=3000, messages=messages)
         content = response.choices[0].message.content
         print(content)
 

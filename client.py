@@ -39,7 +39,11 @@ class Client:
     def get_token(self, callback_url):
         # http://localhost:8080/?code=AQA9aROfylyTWis9bWy3oxgBiwFjcZlXRWMSCQj3hE1q78vLXs0qZTzoEOUPkoHrIVySwhBMLIsaK8JAFu1uCvU915EPp3lRoWnN7pw18Kff0dF2rzRzxuU-gEZ-weuo6wzkna_g2gQ44Ls3ohq7bSpYxf1Uw_8qtxaZtclTb5RGMUuTis4QXgL9gOFA7HHk8ijsuuDN0vDSQ3JQ5Myh5myMYle1eiQV0nCHOTA_UJLKhL6sxt1Gbfxyi56viHHi92gsjQI
         # callback_url = input('url >>> ')
-        auth_code = callback_url.split("code=")[1]
+        auth_code = None
+        try:
+            auth_code = callback_url.split("code=")[1]
+        except:
+            return None
 
         auth_str = f'{self.client_id}:{self.client_secret}'
         auth_base64 = base64.b64encode(auth_str.encode('utf-8')).decode('utf-8')
@@ -60,7 +64,7 @@ class Client:
         
         if response.status_code == 200:
             response_body = response.json()
-            access_token = response_body.get('access_token')
+            access_token = response_body['access_token']
             # refresh_token = response_body.get('refresh_token')  # Store for later use
             return access_token
         else:
