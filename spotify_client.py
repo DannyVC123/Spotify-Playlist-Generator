@@ -149,7 +149,48 @@ class SpotifyClient:
             return artists[closest_artist]
         else:
             return None
+    
+    def get_track(self, name, artist_name):
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {self.authorization_token}'
+        }
+        url = f'https://api.spotify.com/v1/search?q={f'{name} {artist_name}'}&type=track&limit=1'
 
+        response = WebService.call(url, 'get', headers=headers)
+        response_body = response.json()
+        if response.status_code not in [200, 201, 202, 204]:
+            print(response.status_code)
+            print(response_body)
+            return None
+        
+        first_track = response_body['tracks']['items'][0]
+        id = first_track['id']
+        name = first_track['name']
+        
+        artists = []
+        for artist in first_track['artists']:
+            artists.append(artist['name'])
+        
+        album_cover_url = None
+        max_size = 0
+        for image in first_track['album']['images']:
+            size = image['height']
+            if size > max_size:
+                album_cover_url = image['url']
+                max_size = size
+        
+        return Track(id, name, artists, album_cover_url)
+    
+    def get_all_tracks(self, params_json):
+        tracks = []
+        for track_json in params_json:
+            name = track_json['title']
+            artist = track_json['artist']
+            tracks.append(self.get_track(name, artist))
+        return tracks
+
+    '''
     # https://developer.spotify.com/documentation/web-api/reference/get-recommendations
     def get_track_recommendations(self, params_json):
         print(params_json)
@@ -218,6 +259,7 @@ class SpotifyClient:
             print(track)
         
         return recommended_tracks
+    '''
 
     # https://developer.spotify.com/documentation/web-api/reference/create-playlist
     def create_playlist(self, name, description='My New Playlist', public=False):
