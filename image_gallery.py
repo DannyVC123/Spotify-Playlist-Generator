@@ -56,7 +56,7 @@ class ImageGallery:
         self.display_images()
 
     def scroll_right(self):
-        if self.index + self.index >= len(self.tracks):
+        if self.index + self.images_per_page >= len(self.tracks):
             self.index = 0
         else:
             self.index += self.images_per_page

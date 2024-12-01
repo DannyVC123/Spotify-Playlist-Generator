@@ -10,17 +10,24 @@ import sys
 import os
 import base64
 import time
+import random
 
 from web_service import WebService
 from spotify_client import SpotifyClient
+from chatgpt_client import ChatGPTClient
+
 from track import Track
+from artist import Artist
 from playlist import Playlist
 
 class Client:
-    def __init__(self, client_id, client_secret, redirect_uri):
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.redirect_uri = redirect_uri
+    def __init__(self):
+        load_dotenv()
+        self.client_id = os.getenv('CLIENT_ID')
+        self.client_secret = os.getenv('CLIENT_SECRET')
+        self.redirect_uri = os.getenv('REDIRECT_URI')
+
+        self.chatgpt_api_key = os.getenv('CHATGPT_API_KEY')
     
     def autorize(self):
         # https://developer.spotify.com/documentation/web-api/concepts/scopes
@@ -64,12 +71,103 @@ class Client:
         
         if response.status_code == 200:
             response_body = response.json()
-            access_token = response_body['access_token']
+            self.access_token = response_body['access_token']
             # refresh_token = response_body.get('refresh_token')  # Store for later use
-            return access_token
+            return self.access_token
         else:
             print("Error:", response.json())
             return None
+    
+    def init_external_clients(self):
+        self.spotify_client = SpotifyClient(self.access_token)
+        self.chatpgt_client = ChatGPTClient(self.chatgpt_api_key)
+    
+    ##############################
+    #
+    # generate ai playlist
+    #
+    ##############################
+    def generate_ai_playlist(self, user_prompt, playlist_name, limit=10, public=False):
+        # params_json = self.chatgpt_client.get_recommendations_json(user_prompt)
+        # print(params_json)
+
+        tracks_json = '''[
+    {
+        "title": "Spring Day",
+        "artist": "BTS",
+        "album": "You Never Walk Alone"
+    },
+    {
+        "title": "Stay With Me",
+        "artist": "Chanyeol, Punch",
+        "album": "Guardian: The Lonely and Great God (Original Soundtrack)"
+    },
+    {
+        "title": "Only Then",
+        "artist": "Roy Kim",
+        "album": "Begin Again 2"
+    },
+    {
+        "title": "Love Scenario",
+        "artist": "iKON",
+        "album": "Return"
+    },
+    {
+        "title": "LOSER",
+        "artist": "BIGBANG",
+        "album": "MADE"
+    },
+    {
+        "title": "Eyes, Nose, Lips",
+        "artist": "Taeyang",
+        "album": "RISE"
+    },
+    {
+        "title": "12월의 기적 (Miracles In December)",
+        "artist": "EXO",
+        "album": "Miracles in December"
+    },
+    {
+        "title": "Beautiful",
+        "artist": "Crush",
+        "album": "Guardian: The Lonely and Great God (Original Soundtrack)"
+    },
+    {
+        "title": "Breath",
+        "artist": "Lee Hi",
+        "album": "Seoulite"
+    }
+]'''
+        return self.generate_playlist(user_prompt, playlist_name, limit, public)
+
+    def generate_personalized_playlist(self, playlist_name, num_playlists=10, limit=10, public=False, include_private=False):
+        playlists = self.spotify_client.get_playlists(num_playlists, include_private)
+
+        tracks = []
+        songs_per_playlist = 3
+        for playlist in playlists:
+            options = list(range(0, playlist.num_songs))
+            random.shuffle(options)
+
+            for offset in options[0:songs_per_playlist]:
+                track = self.spotify_client.get_track_from_playlist(playlist.id, offset)
+                tracks.append(track)
+        
+        user_prompt = 'Create a playlist based on the following songs:'
+        for track in tracks:
+            user_prompt += f'\n{track.name} by {track.artists[0].name}'
+        
+        return self.generate_playlist(user_prompt, playlist_name, limit, public)
+    
+    def generate_playlist(self, user_prompt, playlist_name, limit=10, public=False):
+        tracks_json = self.chatpgt_client.get_recommendations_json(user_prompt, limit)
+        tracks = self.spotify_client.get_all_tracks(tracks_json, limit)
+        
+        if tracks:
+            playlist = self.spotify_client.create_playlist(playlist_name, public=public)
+            playlist_url = self.spotify_client.populate_playlist(playlist, tracks)
+        
+        return (tracks, playlist_url)
 
 '''
 def exchange_code_for_tokens(auth_code):
@@ -115,33 +213,4 @@ def refresh_access_token(refresh_token):
     
     new_access_token = response_body['access_token']
     return new_access_token
-'''
-
-'''
-auth_url = generate_authorization_url()
-webbrowser.open(auth_url)
-access_token = get_token()
-
-# access_token, refresh_token = exchange_code_for_tokens(auth_code)
-
-# spotify_client = None
-# if access_token and refresh_token:
-    # spotify_client = SpotifyClient(access_token, user_id)
-
-# new_access_token = refresh_access_token(refresh_token)
-spotify_client = SpotifyClient(access_token, user_id)
-
-# last_played_tracks = spotify_client.get_last_played_tracks()
-
-params_json = """{
-  "limit": 10,
-  "seed_artists": ["fuslie", "lilypichu"]
-}
-"""
-recommended_tracks = spotify_client.get_track_recommendations(params_json)
-
-if recommended_tracks:
-    playlist = spotify_client.create_playlist('lily and fuslie chat gpt playlist')
-    playlist_url = spotify_client.populate_playlist(playlist, recommended_tracks)
-    webbrowser.open(playlist_url)
 '''
