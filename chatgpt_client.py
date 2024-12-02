@@ -122,7 +122,7 @@ Based on the user's description, generate a JSON object that includes ALL applic
         content = response.choices[0].message.content
         print(content)
 
-        params_json = json.loads(content[content.find("[") : content.rfind("]") + 1])
-        print(params_json)
-        return params_json
+        tracks_json = json.loads(content[content.find("[") : content.rfind("]") + 1])
+        print(tracks_json)
+        return tracks_json
 

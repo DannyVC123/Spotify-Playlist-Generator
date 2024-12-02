@@ -14,7 +14,8 @@ class WebService:
     def call(url, action, status_codes=None, headers=None, params=None, data=None):
         # https://developer.spotify.com/documentation/web-api/concepts/api-calls
         if not status_codes:
-            status_codes = [200, 201, 202, 204, 304, 400, 401, 403, 404, 429, 500, 502, 503]
+            status_codes = [200, 201, 202, 204, 304, 400, 401, 403, 404]
+        # bad_stautus_codes = [429, 500, 502, 503]
 
         try:
             retries = 0

@@ -34,10 +34,37 @@ class SpotifyClient:
         "synth-pop", "tango", "techno", "trance", "trip-hop", "turkish", "work-out", "world-music"
     ]
 
-    def __init__(self, authorization_token, user_id):
+    def __init__(self, authorization_token):
         self.authorization_token = authorization_token
-        self.user_id = user_id
+        self.user_id = self.get_user_id()
     
+    ##############################
+    #
+    # user info
+    #
+    ##############################
+    # https://developer.spotify.com/documentation/web-api/reference/get-current-users-profile
+    def get_user_id(self):
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {self.authorization_token}'
+        }
+
+        url = 'https://api.spotify.com/v1/me'
+        response = WebService.call(url, 'get', headers=headers)
+        response_body = response.json()
+
+        if response.status_code not in [200, 201, 202, 204]:
+            print(response_body)
+            return None
+        
+        return response_body['id']
+    
+    ##############################
+    #
+    # last played tracks
+    #
+    ##############################
     # https://developer.spotify.com/documentation/web-api/reference/get-recently-played
     def get_last_played_tracks(self, limit=10):
         headers = {
@@ -68,88 +95,12 @@ class SpotifyClient:
             print(tracks[-1])
         
         return tracks
-
-    '''
-    # https://developer.spotify.com/documentation/web-api/reference/get-recommendations
-    def get_track_recommendations(self, tracks, num_songs=10):
-        num_tracks = len(tracks)
-        if num_tracks == 0:
-            return []
-        
-        track_ids = [track.id for track in tracks]
-        songs_per_call = round(num_songs / (len(track_ids) / 5))
-        songs_left = num_songs
-        
-        recommended_tracks = []
-        curr_track_id = 0
-        while True:
-            end_ind = min(curr_track_id + 5, len(track_ids))
-            limit = min(songs_per_call, songs_left)
-            seed_tracks = ','.join(track_ids[curr_track_id:end_ind])
-            print(seed_tracks)
-
-            headers = {
-                'Content-Type': 'application/json',
-                'Authorization': f'Bearer {self.authorization_token}'
-            }
-            url = f'https://api.spotify.com/v1/recommendations?seed_tracks={seed_tracks}&limit={limit}'
-            
-            response = WebService.call(url, 'get', headers=headers)
-            response_body = response.json()
-            if response.status_code not in [200, 201, 202, 204]:
-                print(response.status_code)
-                print(response_body)
-                return None
-
-            for track in response_body['tracks']:
-                id      = track['id']
-                name    = track['name']
-                artists = []
-                for artist in track['artists']:
-                    artists.append(artist['name'])
-                
-                track = Track(id, name, artists)
-                recommended_tracks.append(track)
-
-            curr_track_id += 5
-            songs_left -= limit
-            if curr_track_id >= len(track_ids) or songs_left == 0:
-                break
-        
-        for track in recommended_tracks:
-            print(track)
-        
-        return recommended_tracks
-    '''
-
-    def get_artist(self, artist_name):
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {self.authorization_token}'
-        }
-        url = f'https://api.spotify.com/v1/search?q={artist_name}&type=artist&limit=5'
-
-        response = WebService.call(url, 'get', headers=headers)
-        response_body = response.json()
-        if response.status_code not in [200, 201, 202, 204]:
-            print(response.status_code)
-            print(response_body)
-            return None
-        
-        artists = {}
-        for item in response_body['artists']['items']:
-            id      = item['id']
-            name    = item['name']
-            artists[name] = Artist(id, name.lower())
-            print(f"Artist Name: {name}, Artist ID: {id}")
-        
-        closest_artist = difflib.get_close_matches(artist_name, artists.keys(), n=1)[0]
-        print('closest', closest_artist)
-        if closest_artist:
-            return artists[closest_artist]
-        else:
-            return None
     
+    ##############################
+    #
+    # get tracks
+    #
+    ##############################
     def get_track(self, name, artist_name):
         headers = {
             'Content-Type': 'application/json',
@@ -165,16 +116,19 @@ class SpotifyClient:
             return None
         
         first_track = response_body['tracks']['items'][0]
-        id = first_track['id']
-        name = first_track['name']
+        return self.get_track_from_dict(first_track)
+    
+    def get_track_from_dict(self, track_dict):
+        id = track_dict['id']
+        name = track_dict['name']
         
         artists = []
-        for artist in first_track['artists']:
-            artists.append(artist['name'])
+        for artist in track_dict['artists']:
+            artists.append(Artist(artist['id'], artist['name']))
         
         album_cover_url = None
         max_size = 0
-        for image in first_track['album']['images']:
+        for image in track_dict['album']['images']:
             size = image['height']
             if size > max_size:
                 album_cover_url = image['url']
@@ -182,85 +136,87 @@ class SpotifyClient:
         
         return Track(id, name, artists, album_cover_url)
     
-    def get_all_tracks(self, params_json):
+    def get_all_tracks(self, tracks_json, limit):
         tracks = []
-        for track_json in params_json:
+        track_ids = {}
+        for track_json in tracks_json:
             name = track_json['title']
             artist = track_json['artist']
-            tracks.append(self.get_track(name, artist))
+
+            track = self.get_track(name, artist)
+            tracks.append(track)
+
+            track_ids.add(track.id)
+            if len(track_ids) == limit:
+                break
+        
         return tracks
 
-    '''
-    # https://developer.spotify.com/documentation/web-api/reference/get-recommendations
-    def get_track_recommendations(self, params_json):
-        print(params_json)
+    ##############################
+    #
+    # get user's playlists
+    #
+    ##############################
+    def get_playlists(self, limit=10, include_private=False):
         headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {self.authorization_token}'
         }
 
-        params = json.loads(params_json)
+        playlists_per_call = 10
+        url = f'https://api.spotify.com/v1/me/playlists?limit={playlists_per_call}'
 
-        if 'seed_artists' in params:
-            if len(params['seed_artists']) == 0:
-                del params['seed_artists']
+        playlists = []
+        while len(playlists) < limit:
+            response = WebService.call(url, 'get', headers=headers)
+            response_body = response.json()
+            if response.status_code not in [200, 201, 202, 204]:
+                print(response.status_code)
+                print(response_body)
+                return None
+            
+            for playlist_info in response_body['items']:
+                public = playlist_info['public']
+                if not public and not include_private:
+                    continue
+
+                id          = playlist_info['id']
+                name        = playlist_info['name']
+                num_songs   = playlist_info['tracks']['total']
+                playlists.append(Playlist(id, name, num_songs))
+
+                if len(playlists) == limit:
+                    break
+            
+            if len(playlists) == limit or not response_body.get('next'):
+                break
             else:
-                artist_ids = []
-                for artist_name in params['seed_artists']:
-                    artist = self.get_artist(artist_name)
-                    if not artist:
-                        continue
-                    print('----->', artist, artist.id)
-                    artist_ids.append(artist.id)
-                params['seed_artists'] = ','.join(artist_ids)
-                print(params['seed_artists'])
+                url = response_body['next']
         
-        if 'seed_genres' in params:
-            if len(params['seed_genres']) == 0:
-                del params['seed_genres']
-            else:
-                params['seed_genres'] = ','.join(params['seed_genres'])
-        
-        # query_string = urllib.parse.urlencode(params, doseq=False)
-        # print(query_string)
-
-        print(params)
-
-        url = f'https://api.spotify.com/v1/recommendations'
-        
-        response = WebService.call(url, 'get', headers=headers, params=params)
+        return playlists
+    
+    def get_track_from_playlist(self, playlist_id, offset):
+        url = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks?limit=1&offset={offset}'
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {self.authorization_token}'
+        }
+        response = WebService.call(url, 'get', headers=headers)
         response_body = response.json()
         if response.status_code not in [200, 201, 202, 204]:
             print(response.status_code)
             print(response_body)
             return None
 
-        recommended_tracks = []
-        for track in response_body['tracks']:
-            id      = track['id']
-            name    = track['name']
+        track_info = response_body['items'][0]['track']
+        return self.get_track_from_dict(track_info)
 
-            artists = []
-            for artist in track['artists']:
-                artists.append(artist['name'])
-            
-            album_cover_url = None
-            max_size = 0
-            for image in track['album']['images']:
-                size = image['height']
-                if size > max_size:
-                    album_cover_url = image['url']
-                    max_size = size
-            
-            track = Track(id, name, artists, album_cover_url)
-            recommended_tracks.append(track)
-
-        for track in recommended_tracks:
-            print(track)
-        
-        return recommended_tracks
+    ##############################
+    #
+    # create playlist
+    #
+    ##############################
     '''
-
     # https://developer.spotify.com/documentation/web-api/reference/create-playlist
     def create_playlist(self, name, description='My New Playlist', public=False):
         headers = {
@@ -282,7 +238,40 @@ class SpotifyClient:
             print(response_body)
             return None
         id = response_body['id']
-        return Playlist(id, name)
+        return Playlist(id, name, 0)
+    '''
+    def create_playlist(self, name, description='My New Playlist', public=False):
+        print('made it')
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {self.authorization_token}'
+        }
+        data = {
+            'name': name,
+            'description': description,
+            'public': public
+        }
+        url = f'https://api.spotify.com/v1/users/{self.user_id}/playlists'
+
+        # Add more detailed error logging
+        print(f"Request URL: {url}")
+        print(f"Request Headers: {headers}")
+        print(f"Request Data: {json.dumps(data)}")
+
+        response = WebService.call(url, 'post', headers=headers, data=json.dumps(data))
+        response_body = response.json()
+        
+        print(f"Response Status Code: {response.status_code}")
+        print(f"Full Response Body: {response_body}")
+
+        if response.status_code not in [200, 201, 202, 204]:
+            print(response.status_code)
+            print(response_body)
+            return None
+        id = response_body['id']
+        return Playlist(id, name, 0)
+
+        # Rest of the method remains the same
 
     # https://developer.spotify.com/documentation/web-api/reference/add-tracks-to-playlist
     def populate_playlist(self, playlist, tracks):

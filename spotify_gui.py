@@ -7,31 +7,19 @@ import shutil
 
 import tkinter as tk
 from tkinter import ttk
-from PIL import Image, ImageTk
 from image_gallery import ImageGallery
 
 from client import Client
-from spotify_client import SpotifyClient
-from chatgpt_client import ChatGPTClient
 
 from track import Track
-from playlist import Playlist
 
 class SpotifyGUI:
     width, height = 800, 800
 
     def __init__(self):
-        load_dotenv()
-        self.client_id = os.getenv('CLIENT_ID')
-        self.client_secret = os.getenv('CLIENT_SECRET')
-        self.redirect_uri = os.getenv('REDIRECT_URI')
-        self.user_id = os.getenv('USER_ID')
-        self.client = Client(self.client_id, self.client_secret, self.redirect_uri)
-
-        self.chatgpt_api_key = os.getenv('CHATGPT_API_KEY')
+        self.client = Client()
 
         self.create_ui()
-        # self.display_tracks()
         self.root.mainloop()
 
         if os.path.exists(Track.folder):
@@ -54,8 +42,8 @@ class SpotifyGUI:
         
         self.tabs = {}
         self.create_login_tab()
-        self.create_manual_tab()
         self.create_ai_tab()
+        self.create_personalized_tab()
     
     def create_login_tab(self):
         # Tab
@@ -88,37 +76,6 @@ class SpotifyGUI:
         submit_url_button = tk.Button(tab, text='Submit URL', width=15, command=self.initialize_external_clients)
         submit_url_button.pack(pady=5)
     
-    def create_manual_tab(self):
-        # Tab
-        tab = ttk.Frame(self.notebook)
-        self.notebook.add(tab, text="Manual Generator")
-        self.tabs['manual'] = tab
-
-        # Title
-        title_label = tk.Label(tab, text='Manual Generator', font=('Arial', 16, 'bold'))
-        title_label.pack(pady=10)
-
-        # Frame for number of songs and playlist name
-        params_frame = tk.Frame(tab)
-        params_frame.pack(pady=10)
-
-        # Parameters
-        self.manual_params = []
-
-        self.create_textbox('Number of Songs in Playlist (Default 10)', frame=params_frame, box_size=5, row=0, save_list=self.manual_params)
-        
-        param_names = ['Danceability', 'Energy', 'Valence (Mood)', 'Instrumentalness']
-        for i in range(len(param_names)):
-            self.create_slider(param_names[i], frame=params_frame, min=0, max=1, increments=0.1, row=i+1, save_list=self.manual_params)
-        self.create_slider('Popularity', frame=params_frame, min=0, max=100, increments=1, row=5, save_list=self.manual_params)
-        self.create_slider('Tempo', frame=params_frame, min=30, max=200, increments=1, row=6, save_list=self.manual_params)
-        
-        self.create_textbox('Playlist Name', frame=params_frame, box_size=15, row=7, save_list=self.manual_params)
-
-        # Submit button
-        submit_prompt_button = tk.Button(tab, text='Generate Playlist', width=15, command=self.generate_ai_playlist)
-        submit_prompt_button.pack(pady=5)
-    
     def create_ai_tab(self):
         # Tab
         tab = ttk.Frame(self.notebook)
@@ -130,7 +87,7 @@ class SpotifyGUI:
         title_label.pack(pady=10)
 
         # Playlist Prompt
-        playlist_prompt_label = tk.Label(tab, text='Playlist Prompt:', font=('Arial', 16, 'bold'))
+        playlist_prompt_label = tk.Label(tab, text='Playlist Prompt', font=('Arial', 16, 'bold'))
         playlist_prompt_label.pack(pady=5)
 
         self.playlist_prompt_textbox = tk.Text(tab, width=50, height=8, font=('Arial', 16), wrap=tk.WORD)
@@ -143,10 +100,37 @@ class SpotifyGUI:
         # Params
         self.ai_params = []
         self.create_textbox('Number of Songs in Playlist (Default 10)', frame=params_frame, box_size=5, row=0, save_list=self.ai_params)
-        self.create_textbox('Playlist Name', frame=params_frame, box_size=15, row=1, save_list=self.ai_params)
+        self.create_checkbox('Public Playlist?', frame=params_frame, row=1, save_list=self.ai_params)
+        self.create_textbox('Playlist Name', frame=params_frame, box_size=15, row=2, save_list=self.ai_params)
 
         # Submit button
         submit_prompt_button = tk.Button(tab, text='Generate Playlist', width=15, command=self.generate_ai_playlist)
+        submit_prompt_button.pack(pady=5)
+    
+    def create_personalized_tab(self):
+        # Tab
+        tab = ttk.Frame(self.notebook)
+        self.notebook.add(tab, text="Personalized Playlist Generator")
+        self.tabs['personalized'] = tab
+
+        # Title
+        title_label = tk.Label(tab, text='Personalized Playlist Generator', font=('Arial', 16, 'bold'))
+        title_label.pack(pady=10)
+
+        # Frame for number of songs and playlist name
+        params_frame = tk.Frame(tab)
+        params_frame.pack(pady=10)
+
+        # Params
+        self.personalized_params = []
+        self.create_textbox('Number of Recent Playlists to Search', frame=params_frame, box_size=5, row=0, save_list=self.personalized_params)
+        self.create_checkbox('Search Private Playlists?', frame=params_frame, row=1, save_list=self.personalized_params)
+        self.create_textbox('Number of Songs in Playlist (Default 10)', frame=params_frame, box_size=5, row=2, save_list=self.personalized_params)
+        self.create_checkbox('Public Playlist?', frame=params_frame, row=3, save_list=self.personalized_params)
+        self.create_textbox('Playlist Name', frame=params_frame, box_size=15, row=4, save_list=self.personalized_params)
+
+        # Submit button
+        submit_prompt_button = tk.Button(tab, text='Generate Playlist', width=15, command=self.generate_personalized_playlist)
         submit_prompt_button.pack(pady=5)
     
     def create_textbox(self, name, frame, box_size, row, save_list):
@@ -157,17 +141,17 @@ class SpotifyGUI:
         textbox.grid(row=row, column=1, padx=5, pady=5, sticky=tk.W)
 
         save_list.append(textbox)
-
-    def create_slider(self, name, frame, min, max, increments, row, save_list):
-        label = tk.Label(frame, text=f'{name}:', font=('Arial', 16, 'bold'))
+    
+    def create_checkbox(self, name, frame, row, save_list):
+        label = tk.Label(frame, text=name, font=('Arial', 16, 'bold'))
         label.grid(row=row, column=0, padx=5, pady=5, sticky=tk.W)
-        
-        var = tk.DoubleVar()
-        slider = tk.Scale(frame, variable=var, from_=min, to=max, resolution=increments, orient='horizontal', width=10)
-        var.set((min + max) / 2)
-        slider.grid(row=row, column=1, padx=5, pady=5, sticky=tk.W)
 
-        save_list.append(slider)
+        var = tk.BooleanVar()
+        checkbutton = tk.Checkbutton(frame, variable=var, onvalue=True, offvalue=False)
+        checkbutton.grid(row=row, column=1, padx=5, pady=5, sticky=tk.W)
+        checkbutton.var = var
+
+        save_list.append(checkbutton)
     
     ##############################
     #
@@ -194,8 +178,7 @@ class SpotifyGUI:
             return
         response_label.config(text='Login Successful!', fg='green')
 
-        self.spotify_client = SpotifyClient(access_token, self.user_id)
-        self.chatpgt_client = ChatGPTClient(self.chatgpt_api_key)
+        self.client.init_external_clients()
     
     ##############################
     #
@@ -204,69 +187,48 @@ class SpotifyGUI:
     ##############################
     def generate_ai_playlist(self):
         user_prompt = self.playlist_prompt_textbox.get('1.0', 'end-1c')
-        # params_json = self.gemini_client.get_recommendations_json(user_prompt)
-        # print(params_json)
+        limit = self.ai_params[0].get()
+        public = self.ai_params[1].var.get()
+        try:
+            limit = int(limit)
+        except:
+            limit = 10
+        playlist_name = self.ai_params[2].get()
 
-        params_json = '''[
-    {
-        "title": "Spring Day",
-        "artist": "BTS",
-        "album": "You Never Walk Alone"
-    },
-    {
-        "title": "Stay With Me",
-        "artist": "Chanyeol, Punch",
-        "album": "Guardian: The Lonely and Great God (Original Soundtrack)"
-    },
-    {
-        "title": "Only Then",
-        "artist": "Roy Kim",
-        "album": "Begin Again 2"
-    },
-    {
-        "title": "Love Scenario",
-        "artist": "iKON",
-        "album": "Return"
-    },
-    {
-        "title": "LOSER",
-        "artist": "BIGBANG",
-        "album": "MADE"
-    },
-    {
-        "title": "Eyes, Nose, Lips",
-        "artist": "Taeyang",
-        "album": "RISE"
-    },
-    {
-        "title": "12월의 기적 (Miracles In December)",
-        "artist": "EXO",
-        "album": "Miracles in December"
-    },
-    {
-        "title": "Hug Me",
-        "artist": "Jung Joon Young, Younha",
-        "album": "JJY"
-    },
-    {
-        "title": "Beautiful",
-        "artist": "Crush",
-        "album": "Guardian: The Lonely and Great God (Original Soundtrack)"
-    },
-    {
-        "title": "Breath",
-        "artist": "Lee Hi",
-        "album": "Seoulite"
-    }
-]'''
-        tracks = self.spotify_client.get_all_tracks(json.loads(params_json))
+        tracks, playlist_url = self.client.generate_ai_playlist(user_prompt, playlist_name, limit, public)
+        if not tracks or not playlist_url:
+            return
         
-        if tracks:
-            self.album_gallery = ImageGallery(self.tabs['ai'], tracks)
-            playlist_name = self.ai_params[1].get()
-            
-            playlist = self.spotify_client.create_playlist(playlist_name)
-            playlist_url = self.spotify_client.populate_playlist(playlist, tracks)
-            webbrowser.open(playlist_url)
+        self.album_gallery = ImageGallery(self.tabs['ai'], tracks)
+        webbrowser.open(playlist_url)
+    
+    ##############################
+    #
+    # generate personal playlist
+    #
+    ##############################
+    def generate_personalized_playlist(self):
+        num_playlists = self.personalized_params[0].get()
+        try:
+            num_playlists = int(num_playlists)
+        except:
+            num_playlists = 5
+        include_private = self.personalized_params[1].var.get()
+        limit = self.personalized_params[2].get()
+        try:
+            limit = int(limit)
+        except:
+            limit = 10
+        print(limit)
+        print(type(limit))
+        public = self.personalized_params[3].var.get()
+        playlist_name = self.personalized_params[4].get()
+
+        tracks, playlist_url = self.client.generate_personalized_playlist(playlist_name, num_playlists, limit, public, include_private)
+        if not tracks or not playlist_url:
+            return
+        
+        self.album_gallery = ImageGallery(self.tabs['personalized'], tracks)
+        webbrowser.open(playlist_url)
 
 SpotifyGUI()
