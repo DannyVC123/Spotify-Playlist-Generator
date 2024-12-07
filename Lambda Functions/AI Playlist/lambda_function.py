@@ -3,8 +3,8 @@ import logging
 import traceback
 import os
 
-from chatgpt_client import ChatGPTClient
-from spotify_client import SpotifyClient
+from Deprecated.chatgpt_client import ChatGPTClient
+from Deprecated.spotify_client import SpotifyClient
 
 def lambda_handler(event, context):
     try:
