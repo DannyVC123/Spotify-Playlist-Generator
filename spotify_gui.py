@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 from image_gallery import ImageGallery
 
 from client import Client
-from image_recognition import ImageRecognition
+from Deprecated.image_recognition import ImageRecognition
 
 from track import Track
 

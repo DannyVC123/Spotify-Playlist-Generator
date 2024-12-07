@@ -13,9 +13,9 @@ import time
 import random
 
 from web_service import WebService
-from spotify_client import SpotifyClient
-from chatgpt_client import ChatGPTClient
-from image_recognition import ImageRecognition
+from Deprecated.spotify_client import SpotifyClient
+from Deprecated.chatgpt_client import ChatGPTClient
+from Deprecated.image_recognition import ImageRecognition
 
 from track import Track
 from artist import Artist

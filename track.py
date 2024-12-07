@@ -1,10 +1,10 @@
-import requests
-
 import os
 
 import base64
 from io import BytesIO
 from PIL import Image, ImageTk
+
+from artist import Artist
 
 class Track:
     folder = './album_covers'

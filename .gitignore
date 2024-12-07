@@ -164,5 +164,9 @@ cython_debug/
 # AWS secrets
 *.ini
 
+# final Project Submission Extras
+env.txt
+readme.txt
+
 # macOS
 .DS_Store

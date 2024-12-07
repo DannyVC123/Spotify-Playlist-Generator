@@ -14,7 +14,7 @@ import base64
 import time
 
 from web_service import WebService
-from spotify_client import SpotifyClient
+from Deprecated.spotify_client import SpotifyClient
 
 class GeminiClient:
     system_prompt = '''Interpret casual descriptions of music preferences and convert them into Spotify playlist JSON. Map descriptions to Spotify API parameters. The user will provide a general description of what they want in a playlist, without directly referencing Spotify API parameters.

@@ -12,6 +12,6 @@
 
 1. Download all the remaining files.
 2. Install the necessary libraries by running `pip install -r requirements.txt`.
-3. Edit the `.env` file to include your own Spotify and OpenAI API keys (default keys are provided).
-4. Update the `.ini` file with your own S3 bucket details and required keys.
+3. Create a `.env` file with your own Spotify and OpenAI API keys.
+4. Create a `.ini` file with your own S3 bucket details and required keys.
 5. Run `spotify_gui.py` to launch the application.

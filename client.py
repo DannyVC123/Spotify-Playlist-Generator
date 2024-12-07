@@ -5,20 +5,12 @@ import webbrowser
 
 from dotenv import load_dotenv
 import uuid
-import pathlib
-import logging
-import sys
 import os
 import base64
-import time
-import random
 
 from configparser import ConfigParser
 
 from web_service import WebService
-from spotify_client import SpotifyClient
-from chatgpt_client import ChatGPTClient
-from image_recognition import ImageRecognition
 
 from track import Track
 from artist import Artist
