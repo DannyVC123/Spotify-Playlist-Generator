@@ -15,3 +15,7 @@
 3. Create a `.env` file with your own Spotify and OpenAI API keys.
 4. Create a `.ini` file with your own S3 bucket details and required keys.
 5. Run `spotify_gui.py` to launch the application.
+
+### Architecture
+
+![Alt text](https://github.com/DannyVC123/Spotify-Playlist-Generator/blob/main/CS%20310%20Final%20Project%20Diagram.jpg)
